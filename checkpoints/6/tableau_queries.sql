@@ -1,4 +1,6 @@
-/*1. Which pairings between identity groups of officers and their respective accusers are most common? (One axis is officer identity group, the other axis is accuser identity group. Each intersection of officer and accuser is a datapoint of number of instances. Data points are larger with greater number of instances.)*/
+/*1. Which pairings between identity groups of officers and their respective accusers are most common? (One axis is officer
+identity group, the other axis is accuser identity group. Each intersection of officer and accuser is a datapoint of number 
+of instances. Data points are larger with greater number of instances.)*/
 
 CREATE TABLE vis1_1 AS 
         WITH pairing_allegations AS 
@@ -27,8 +29,9 @@ CREATE TABLE vis2_1 AS
 
 \copy vis2_1 to '/Users/caseygrage/Downloads/vis2_1.csv' WITH (FORMAT csv);
 
-/*I’ve only looked at COUNTS of different variables. But these counts are pretty meaningless without comparing identity groups to the overall police or civilian populations. 
-So here is a spreadsheet of the officers with allegations (broken down by race/gender) as well as the totals of each race/gender from the police officer.*/
+/*I’ve only looked at COUNTS of different variables. But these counts are pretty meaningless without comparing identity 
+groups to the overall police or civilian populations. So here is a spreadsheet of the officers with allegations (broken 
+down by race/gender) as well as the totals of each race/gender from the police officer.*/
 
 CREATE TABLE vis2_2 AS
         WITH officer_totals AS 
@@ -42,7 +45,8 @@ CREATE TABLE vis2_2 AS
        GROUP BY officer_race, officer_gender, total_count;
 
 
-/*3. What identity groups of civilians make them more likely to file complaints/accusations for each type of harassment? (Pie chart/bar graph)
+/*3. What identity groups of civilians make them more likely to file complaints/accusations for each type of harassment?
+(Pie chart/bar graph)
 Need table of complainant_gender, complainant_race, and type of harassment...*/
 
 CREATE TABLE vis3_1 AS
@@ -57,7 +61,8 @@ CREATE TABLE vis3_1 AS
 \copy vis3_1 to '/Users/caseygrage/Downloads/vis3_1.csv' WITH (FORMAT csv);
 
 
-/*4. What identity groups of officers make them more likely to have complaints/accusations for each type of harassment filed against them? (highlight table)
+/*4. What identity groups of officers make them more likely to have complaints/accusations for each type of harassment filed 
+against them? (highlight table)
 Need table of officer_gender, officer_race, and type of harassment*/
 
 CREATE TABLE vis4_1 AS
@@ -80,4 +85,6 @@ SELECT COUNT (distinct o.id), o.race, o.gender
  WHERE o.race is NOT NULL 
  GROUP BY o.race, o.gender;
 
-/*All that data can be added to the previous vis4_1 table as  a column using a simple python statement (just wherever race = ___ and gender = ___, fill the ‘total’ column with the corresponding total from the above select statement. The percentage can be calculated by dividing the no. allegation column by the total count column and multiplying by 100.*/
+/*All that data can be added to the previous vis4_1 table as  a column using a simple python statement (just wherever 
+race = ___ and gender = ___, fill the ‘total’ column with the corresponding total from the above select statement. 
+The percentage can be calculated by dividing the no. allegation column by the total count column and multiplying by 100.*/
