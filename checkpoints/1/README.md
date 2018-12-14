@@ -7,14 +7,14 @@ Demographics of complaint reports:
 * They were also the most common victims in complaint reports
 
 ```
-gender | race | count
---------+--------------------------------+-------
-M | Black | 36856
-F | Black | 22342
-M | White | 7384
-M | Hispanic | 7017
-F | White | 4990
-F | Hispanic | 3585
+gender | race     | count
+-------+----------+-------
+M      | Black    | 36856
+F      | Black    | 22342
+M      | White    | 7384
+M      | Hispanic | 7017
+F      | White    | 4990
+F      | Hispanic | 3585
 ```
 
 Officers with multiple allegations:
