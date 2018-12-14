@@ -15,6 +15,12 @@
 
 3. Do police officers of certain identity groups have more allegations against them in low income areas than in higher income areas?
 
+   *income info: https://www.chicagocomputerclasses.com/average-city-chicago-income/*
+   
+   *beat/neighborhood info: https://data.cpdp.co/data/bgKwNB/*
+   
+   *neighborhood racial demographic info: www.areavibes.com*
+   
    In higher income neighborhoods, Black officers were more likely to have allegations against them compared to the overall population of black people while white officers were less likely to have allegations against them compared to the general population in that neighborhood. Interestingly, Asian officers were much less likely to have allegations against them compared to the overall population, but this could be due simply to the small sample size. In lower income neighborhoods, white officers were much more likely to have allegations against them compared to the general population while black officers were much less likely to have allegations against them compared to the general population. From this, we learned that income area matters a lot in correlating whether an officer of a certain race is more or less likely to have an allegation against them compared to the general population.
 
 4. Are certain identity groups overrepresented as complainants in low income areas verses higher income areas compared to the general population?
