@@ -1,0 +1,149 @@
+3. Do police officers of certain identity groups have more allegations against them in low income areas than in higher income areas?
+
+We used Trifacta Wrangler to join the data_officerallegations table with information from data_officer, data_allegation, and data_area, in order to combine demographic information about the listed officers with the areas (beats) that the allegations took place.
+Used https://www.chicagocomputerclasses.com/average-city-chicago-income/ to find the neighborhoods with the highest and lowest average incomes. 
+Used https://data.cpdp.co/data/bgKwNB/ to find the beats within neighborhoods of interest.
+Used www.areavibes.com to find racial demographics of neighborhoods of interest.
+
+Queries to import CSV to Postgres:
+CREATE TABLE data_oa_with_area (beat_id varchar, allegation_id varchar, race varchar, name varchar);
+\copy data_oa_with_area FROM '/Users/caseygrage/Downloads/data_oa_with_area.csv' WITH (FORMAT csv);
+
+
+Higher income neighborhoods (descending order):  
+Near North Side: Avg Income $88,669.00
+Table of number of allegations per identity group in this neighborhood
+
+QUERY:
+SELECT race, COUNT(*) FROM data_oa_with_area WHERE name='1833' OR name='1834' OR name='1832' OR name='1831' OR name='1824' OR name='1823' OR name='1822' OR name='1821' GROUP BY race ORDER BY COUNT(*) ASC;
+
+OUTPUT:
+              race              | count 
+--------------------------------+-------
+ Native American/Alaskan Native |     5
+ Asian/Pacific                  |    49
+ Hispanic                       |   237
+ Black                          |   296
+ White                          |  1158
+(5 rows)
+
+Total: 1745
+Percentage of officers of each identity group with allegations against them (compared to the total) is written in bold type.
+Native American: 0.002865329513 * 100 = 0.2865% (0.33%)
+Asian/Pacific: 0.02808022923 * 100 = 2.808% (11.59%)
+Hispanic: 0.1358166189 * 100 = 13.5817% (n/a)
+Black: 0.1696275072 * 100 = 16.9628% (8.94%)
+White: 0.6636103152 * 100 = 66.3610% (75.49%)
+The percentage of that identity group in the general population is written in parentheses in gray next to the part a percentages
+
+Lincoln Park: Avg Income $71,551.00
+Table of number of allegations per identity group in this neighborhood
+QUERY:
+SELECT race, COUNT(*) FROM data_oa_with_area WHERE name='1813' OR name='1812' OR name='1811' OR name='1932' OR name='1935' OR name='1814' GROUP BY race ORDER BY COUNT(*) ASC;
+
+OUTPUT:
+     race      | count 
+---------------+-------
+ Asian/Pacific |     1
+ Hispanic      |    31
+ Black         |    66
+ White         |   200
+(4 rows)
+Total: 298
+Percentage of officers of each identity group with allegations against them (compared to the total) is written in bold type.
+Asian/Pacific: 0.003355704698 * 100 = 0.33557% (6.18%)
+Hispanic: 0.1040268456 * 100 = 10.4027% (n/a)
+Black: 0.2214765101 * 100 = 22.1477% (4.69%)
+White: 0.6711409396 * 100 = 67.1141%  85.23%)
+The percentage of that identity group in the general population is written in parentheses in gray next to the part a percentages
+
+Lake View: Avg Income $60,058.00
+Table of number of allegations per identity group in this neighborhood
+QUERY:
+SELECT race, COUNT(*) FROM data_oa_with_area WHERE name='1935' OR name='1934' OR name='1933' OR name='1932' OR name='1924' OR name='1923' OR name='1922' GROUP BY race ORDER BY COUNT(*) ASC;
+
+OUTPUT:
+     race      | count 
+---------------+-------
+ Asian/Pacific |     4
+ Black         |    14
+ Hispanic      |    27
+ White         |   114
+(4 rows)
+Total: 159
+Percentage of officers of each identity group with allegations against them (compared to the total) is written in bold type.
+Asian/Pacific: 0.0251572327 * 100 = 2.5157% (6.77%)
+Hispanic: 0.1698113208 * 100 = 16.9811% (n/a)
+Black: 0.08805031447 * 100 = 8.805% (3.40%)
+White: 0.7169811321 * 100 = 71.6981% (85.50%)
+The percentage of that identity group in the general population is written in parentheses in gray next to the part a percentages
+
+Lower Income neighborhoods (descending order):
+North Lawndale: Avg. Income $12,034.00
+Table of number of allegations per identity group in this neighborhood
+QUERY:
+SELECT race, COUNT(*) FROM data_oa_with_area WHERE name='1133' OR name='1023' OR name='1022' OR name='1021' OR name='1014' OR name='1013' OR name='1012' OR name='1011' GROUP BY race ORDER BY COUNT(*) ASC;
+
+OUTPUT:
+              race              | count 
+--------------------------------+-------
+ Native American/Alaskan Native |     8
+ Asian/Pacific                  |    58
+ Black                          |   291
+ Hispanic                       |   993
+ White                          |  1199
+(5 rows)
+Total: 2,549
+Percentage of officers of each identity group with allegations against them (compared to the total) is written in bold type.
+Native American: 0.003138485681 * 100 = 0.3138% (0.25%)
+Asian/Pacific: 0.02275402118 * 100 = 2.2754% (0.25%)
+Hispanic: 0.3895645351 * 100 = 38.9564% (n/a)
+Black: 0.1141624166 * 100 = 11.4162% (88.47%)
+White: 0.4703805414 * 100 = 47.0381% (7.34%)
+The percentage of that identity group in the general population is written in parentheses in gray next to the part a percentages
+
+West Garfield Park: Avg. Income $10,934.00
+Table of number of allegations per identity group in this neighborhood
+QUERY:
+SELECT race, COUNT(*) FROM data_oa_with_area WHERE name='1123' OR name='1124' OR name='1134' OR name='1222' OR name='1124' OR name='1125' OR name='1133' OR name='1122' OR name='1132' OR name='114' OR name='115' GROUP BY race ORDER BY COUNT(*) ASC;
+
+OUTPUT:
+              race              | count 
+--------------------------------+-------
+ Native American/Alaskan Native |    19
+ Asian/Pacific                  |    66
+ Black                          |   615
+ Hispanic                       |   835
+ White                          |  1993
+(5 rows)
+Total: 3528
+Percentage of officers of each identity group with allegations against them (compared to the total) is written in bold type.
+Native American: 0.005385487528 * 100 = 0.5385% (0.13%)
+Asian/Pacific: 0.01870748299 * 100 = 1.8707%  0.19%)
+Hispanic: 0.2366780045 * 100 = 23.6678%  (n/a)
+Black: 0.1743197279 * 100 = 17.43197% (95.58%)
+White: 0.5649092971 * 100 = 56.4909% (2.16%)
+The percentage of that identity group in the general population is written in parentheses in gray next to the part a percentages
+
+South Lawndale: Avg. Income $10,402.00
+Table of number of allegations per identity group in this neighborhood
+QUERY:
+SELECT race, COUNT(*) FROM data_oa_with_area WHERE name='1013' OR name='1024' OR name='1031' OR name='1032' OR name='1033' GROUP BY race ORDER BY COUNT(*) ASC;
+
+OUTPUT:
+              race              | count 
+--------------------------------+-------
+ Native American/Alaskan Native |     3
+ Asian/Pacific                  |    10
+ Black                          |    88
+ White                          |   225
+ Hispanic                       |   288
+Total: 614
+Percentage of officers of each identity group with allegations against them (compared to the total) is written in bold type.
+Native American: 0.004885993485 * 100 = 0.4886% (0.54%) 
+Asian/Pacific: 0.01628664495 * 100 = 1.6287% (6.09%)
+Hispanic: 0.4690553746 * 100 = 46.9055% (n/a)
+Black: 0.1433224756 * 100 = 14.3322% (30.95%)
+White: 0.3664495114 * 100 = 36.64495% (48.69%)
+
+The percentage of that identity group in the general population is written in parentheses in gray next to the part a percentages

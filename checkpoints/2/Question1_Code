@@ -1,0 +1,206 @@
+1. Are the identity groups most represented in plaintiffs from the settlement data also most likely to be victims in the complaint reports?
+
+For our first two questions, we intended to combine demographic data about civilians from the settlement and cpdb datasets in a pipeline similar to the following:
+(Make table of total no. of plaintiffs in each identity group) Identify identity groups of plaintiffs in the settlement data using demographic information from cpdb data (make a table joining the names from plaintiffs in cpdb to the complainants’ identity groups, if possible)
+(Make table of no. of victims in each identity group) Identify most common identity groups of victims from cpdb (done in checkpoint #1)
+We were unable to find sufficient identifying or demographic information about the plaintiffs in the provided core settlement database that was published on Canvas, so we had to improvise methods of collecting this data…
+We mapped settlement location to the corresponding cpdb beat_id. We then found the majority race of each beat_id, and assigned that race to the race of the plaintiff. This allowed us to find the percentage of each race in total settlements. We also looked up the median income of each beat_id and used that data to look at trends between race, income_area, and no. of settlements. This method also normalizes the number of allegations from people of a given identity group in a neighborhood by their representation in that area's population. Otherwise it is difficult to distinguish whether one group is represented among the plaintiffs.
+
+FIRST (find most represented races in plaintiffs)
+Cpdb data_area provides median_income, polygon, and data_racepopulation
+Map settlement lat/lon to cpdb polygons
+
+QUERY:
+CREATE TABLE mapped_settlements AS SELECT a.id,c.case_no FROM data_area a, cases_case c WHERE ST_INTERSECTS(a.polygon, ST_SetSRID(ST_MakePoint(c.lon,c.lat),4326)) AND a.id NOTNULL ORDER BY a.id desc;
+(SELECT a.description,c.case_no FROM data_area a, cases_case c WHERE ST_INTERSECTS(a.polygon, ST_SetSRID(ST_MakePoint(c.lon,c.lat),4326)) AND a.description NOTNULL; for the names of the neighborhoods. Just interesting!)
+
+Make table of majority race per area_id
+QUERY:
+CREATE TABLE mapped_majorityrace AS SELECT rp.* FROM data_racepopulation rp INNER JOIN (SELECT area_id, MAX(count) AS MajorityRace FROM data_racepopulation GROUP BY area_id) groupedrp ON rp.area_id = groupedrp.area_id AND rp.count = groupedrp.MajorityRace ORDER BY rp.area_id desc;
+
+QUERY:
+CREATE TABLE majorityrace_sansid AS SELECT race, count, area_id FROM mapped_majorityrace GROUP BY race, count, area_id ORDER BY area_id desc;
+
+Note: the area_id’s for data_racepopulation only start at 426. I guess the area_id’s less than that don’t have corresponding race data in the database.
+Assign majority race (from data_racepopulation of the polygon) to the race of that settlement
+
+QUERY:
+CREATE TABLE settlement_races AS SELECT mapped_settlements.*, majorityrace_sansid.* FROM mapped_settlements JOIN majorityrace_sansid ON majorityrace_sansid.area_id = mapped_settlements.id;
+THEN find percentage of each race in total settlements
+
+QUERY:
+SELECT race, COUNT(distinct case_no) FROM settlement_races GROUP BY race ORDER BY COUNT(*) DESC;
+
+OUTPUT:
+   race   | count 
+----------+-------
+ Black    |   462
+ Hispanic |   256
+ White    |   179
+ Asian    |     8
+(4 rows)
+
+ORGANIZING DATA:
+Total: 905
+Black: 462/905 * 100 = 51.0497%
+Hispanic: 256/905 * 100 = 28.2873%
+White: 179/905 * 100 = 19.7790%
+Asian: 8/905 * 100 = 0.883978%
+Native American: 0/905 = 0%
+
+
+SECOND (find most represented races in complainants)
+Make table of total no. of complaints each identity group has filed
+
+QUERY (For officer and civilian complainants): 
+SELECT race, COUNT(distinct allegation_id) FROM data_complainant GROUP BY race ORDER BY COUNT(*) DESC;
+
+OUTPUT:
+race              | count 
+--------------------------------+-------
+ Black                          | 33032
+ White                          | 11591
+ Hispanic                       | 10220
+ Asian/Pacific Islander         |   485
+ Native American/Alaskan Native |    74
+(5 rows)
+
+ORGANIZING NUMBERS:
+Total: 55402
+Black: 33032/55402 * 100 = 59.6223%
+Hispanic: 10220/55402 * 100 = 18.4470%
+White: 11591/55402 * 100 = 20.9216%
+Asian: 485/55402 * 100 = 0.875419%
+Native American: 74/55402 * 100 = 0.133569%
+
+
+THIRD
+We found median_income to be very lacking??? There’s just a ton of beat_id’s that have no corresponding median_income.
+
+QUERY:
+SELECT* median_income FROM data_area; shows median_income is missing a lot of data…. 
+
+Join settlement_races to neighborhood of that area_id
+
+QUERY:
+CREATE TABLE settlement_races_income AS SELECT settlement_races.area_id, settlement_races.case_no, settlement_races.race, settlement_races.count, data_area.median_income FROM settlement_races JOIN data_area ON settlement_races.area_id = data_area.id;
+SELECT* FROM settlement_races_income WHERE median_income NOTNULL;
+
+I’ve decided there is enough median_income data. No need to look for external data (external data wouldn’t even necessarily match up to area_id)
+
+Export table to CSV
+QUERY:
+\copy settlement_races_income to '/Users/caseygrage/Downloads/settlement_races_income.csv' WITH (FORMAT csv);
+
+Reformat strings of median_income to ints
+QUERY:
+CREATE TABLE races_income2 (area_id varchar, case_no varchar, count varchar, string_median_income varchar, race varchar, median_income int);
+\copy races_income2 FROM '/Users/caseygrage/Downloads/races_income2.csv' WITH (FORMAT csv);
+
+Find number of complainants per income group (by race)
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE median_income < 10000 GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+race | count 
+------+-------
+(0 rows)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE median_income < 20000 GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+ race  | count 
+-------+-------
+ Black |    32
+(1 row)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE (median_income < 30000 AND median_income > 20000) GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+ race  | count 
+-------+-------
+ Asian |     4
+ Black |   235
+(2 rows)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE (median_income < 40000 AND median_income > 30000) GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+   race   | count 
+----------+-------
+ White    |     6
+ Hispanic |   105
+ Black    |   129
+(3 rows)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE (median_income < 50000 AND median_income > 40000) GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+   race   | count 
+----------+-------
+ Asian    |     4
+ Black    |    20
+ White    |    21
+ Hispanic |    38
+(4 rows)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE (median_income < 60000 AND median_income > 50000) GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+   race   | count 
+----------+-------
+ White    |    10
+ Hispanic |    22
+(2 rows)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE (median_income < 70000 AND median_income > 60000) GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+   race   | count 
+----------+-------
+ Hispanic |     4
+ Black    |    13
+ White    |    17
+(3 rows)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE (median_income < 80000 AND median_income > 70000) GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+ race  | count 
+-------+-------
+ White |    72
+(1 row)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE (median_income < 90000 AND median_income > 80000) GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+ race  | count 
+-------+-------
+ White |    32
+(1 row)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE (median_income < 100000 AND median_income > 90000) GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+ race  | count 
+-------+-------
+ White |    15
+(1 row)
+
+QUERY:
+SELECT race, COUNT(*) FROM races_income2 WHERE (median_income >= 100000) GROUP BY race ORDER BY COUNT(*);
+
+OUTPUT:
+ race  | count 
+-------+-------
+ White |     1
+(1 row)

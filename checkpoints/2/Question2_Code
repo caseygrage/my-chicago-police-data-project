@@ -1,0 +1,40 @@
+2. Are certain identity groups overrepresented in the complaints and settlement database compared to the general population?
+
+Because of the problems we ran into in #1, we were unable to analyze the overall demographics of civilians (plaintiffs) in both the settlement and cpdb dataset. However, to gain some initial insight into this problem, we found the percent chance that any given race will be a complainant (by comparing number of complainants by race compared to their total Chicago population - using the data_racepopulation table from cpdb).
+
+Make table of total no. of complaints each identity group has filed
+QUERY (For officer and civilian complainants): 
+SELECT race, COUNT(distinct allegation_id) FROM data_complainant GROUP BY race ORDER BY COUNT(*) DESC;
+
+OUTPUT:
+              race              | count 
+--------------------------------+-------
+ Black                          | 33032
+ White                          | 11591
+ Hispanic                       |  5339
+                                |  4881
+ Asian/Pacific Islander         |   485
+ Native American/Alaskan Native |    74
+(6 rows)
+
+Compare to general population of identity group
+QUERY:
+SELECT race, SUM(count) AS "Total Counts" FROM data_racepopulation GROUP BY race;
+
+OUTPUT:
+      race       | Total Counts 
+-----------------+--------------
+ Black           |      1712474
+ Hispanic        |      1569483
+ Native American |         4097
+ Other           |        91342
+ White           |      1729593
+ Asian           |       305590
+(6 rows)
+
+Other: 0.05343653522 * 100 = 5.344%
+Black: 0.01928905198 * 100 = 1.929%
+Native American: 0.01806199658 * 100 = 1.806%
+White: 0.006701576614 * 100 = 0.6701%
+Hispanic: 0.003401757139 * 100 = 0.3401%
+Asian: 0.001587093819 * 100 = 0.1587%

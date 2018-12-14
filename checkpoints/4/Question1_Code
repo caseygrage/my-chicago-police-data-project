@@ -1,0 +1,183 @@
+1. Given data from years ‘A’ through ‘E,’ can we predict how the rate of complaints that result in disciplinary action against the officer will change over time for years ‘F’ through ‘J’? Does this model get better or worse with added features (in addition to year): officer gender, officer race, complainant race, and complainant gender?
+
+Command 1
+
+data_allegation_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/data_allegation.csv')
+data_officerallegation_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/data_officerallegation.csv')
+data_officer_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/data_officer.csv')
+data_investigatorallegation_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/data_investigatorallegation.csv')
+data_investigator_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/data_investigator.csv')
+data_victim_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/data_victim.csv')
+data_complainant_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/data_complainant.csv')
+trr_trr_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/trr_trr.csv')
+trr_subjectweapon_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/trr_subjectweapon.csv')
+trr_actionresponse_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/trr_actionresponse.csv')
+trr_weapondischarge_df = spark.read.format('csv').options(header='true', inferSchema='true').load('/FileStore/tables/trr_weapondischarge.csv'),
+
+Command 2:
+
+data_allegation_df.createOrReplaceTempView("data_allegation")
+data_officerallegation_df.createOrReplaceTempView("data_officerallegation")
+data_officer_df.createOrReplaceTempView("data_officer")
+data_investigatorallegation_df.createOrReplaceTempView("data_investigatorallegation")
+data_investigator_df.createOrReplaceTempView("data_investigator")
+data_victim_df.createOrReplaceTempView("data_victim")
+data_complainant_df.createOrReplaceTempView("data_complainant")
+trr_trr_df.createOrReplaceTempView("trr_trr")
+trr_actionresponse_df.createOrReplaceTempView("trr_actionresponse")
+trr_subjectweapon_df.createOrReplaceTempView("trr_subjectweapon")
+trr_weapondischarge_df.createOrReplaceTempView("trr_weapondischarge")
+
+Command 3:
+
+%sql 
+
+-- #2 getting data from year with all combos
+
+--  select year, count(*) from data_allegation group by year order by year;
+-- select incident_date, year(incident_date) as year from data_allegation limit 10;
+-- select a.* from data_allegation a limit 10;
+-- NOTE: Even this simple command is telling me below that incident_date does not exist as a column!
+-- Check it out -- maybe the data is different now? They have year, month and day and time as separate fields!
+-- Ok cool! so i ugess i can just get a.year?
+
+-- previous query with year included
+WITH pairing_allegations AS (
+  SELECT c.race as complainant_race, o.race as officer_race, c.gender as complainant_gender, o.gender as officer_gender, oa.disciplined, 
+  YEAR(a.incident_date) as year
+  FROM data_allegation a, data_officerallegation oa, data_officer o, data_complainant c 
+  WHERE o.id = oa.officer_id AND oa.allegation_id = a.id AND a.id = c.allegation_id
+),
+
+result_set AS (
+  SELECT year, complainant_race, officer_race, complainant_gender, officer_gender, (100.0*COUNT(CASE WHEN disciplined=true THEN 1 END)/COUNT(*)) as pctgpi, count(*) as total_complaints
+  FROM pairing_allegations
+  WHERE complainant_race != "" AND officer_race != "" AND complainant_gender != "" AND officer_gender != "" -- AND year != ""
+  GROUP BY year, complainant_race, officer_race, complainant_gender, officer_gender
+  ORDER BY complainant_race, officer_race, complainant_gender, officer_gender, year
+)
+
+-- **To get all the data:
+-- SELECT * FROM result_set
+-- WHERE year=2017
+-- ORDER BY complainant_race, officer_race, complainant_gender, officer_gender, year;
+
+-- **To see how much data you have, by year:
+-- select year, count(*) from pairing_allegations
+-- group by year
+-- order by year;
+
+-- **To see a specific combination:
+select * from result_set
+where complainant_race = 'White' AND officer_race='White' and complainant_gender='F' and officer_gender='M'
+order by year;
+
+Command 4:
+
+%sql 
+
+-- #2 
+-- just officer race 
+
+WITH pairing_allegations AS (
+  SELECT c.race as complainant_race, o.race as officer_race, c.gender as complainant_gender, o.gender as officer_gender, oa.disciplined, 
+  YEAR(a.incident_date) as year
+  FROM data_allegation a, data_officerallegation oa, data_officer o, data_complainant c 
+  WHERE o.id = oa.officer_id AND oa.allegation_id = a.id AND a.id = c.allegation_id
+),
+
+result_set AS (
+  SELECT year, officer_race, (100.0*COUNT(CASE WHEN disciplined=true THEN 1 END)/COUNT(*)) as pctgpi, count(*) as total_complaints
+  FROM pairing_allegations
+  WHERE officer_race != ""
+  GROUP BY year, officer_race
+  ORDER BY year, officer_race
+)
+
+-- **To get all the data:
+-- SELECT * FROM result_set
+-- WHERE year=2017
+-- ORDER BY complainant_race, officer_race, complainant_gender, officer_gender, year;
+
+-- **To see how much data you have, by year:
+-- select year, count(*) from pairing_allegations
+-- group by year
+-- order by year;
+
+-- **To see a specific combination:
+select * from result_set
+where officer_race='White'
+order by year;
+
+Command 5:
+
+%sql 
+-- #2 
+-- just complainant race 
+
+WITH pairing_allegations AS (
+  SELECT c.race as complainant_race, o.race as officer_race, c.gender as complainant_gender, o.gender as officer_gender, oa.disciplined, 
+  YEAR(a.incident_date) as year
+  FROM data_allegation a, data_officerallegation oa, data_officer o, data_complainant c 
+  WHERE o.id = oa.officer_id AND oa.allegation_id = a.id AND a.id = c.allegation_id
+),
+
+result_set AS (
+  SELECT year, complainant_race, (100.0*COUNT(CASE WHEN disciplined=true THEN 1 END)/COUNT(*)) as pctgpi, count(*) as total_complaints
+  FROM pairing_allegations
+  WHERE complainant_race != ""
+  GROUP BY year, complainant_race
+  ORDER BY year, complainant_race
+)
+
+-- **To get all the data:
+-- SELECT * FROM result_set
+-- WHERE year=2017
+-- ORDER BY complainant_race, officer_race, complainant_gender, officer_gender, year;
+
+-- **To see how much data you have, by year:
+-- select year, count(*) from pairing_allegations
+-- group by year
+-- order by year;
+
+-- **To see a specific combination:
+select * from result_set
+where complainant_race='Black'
+order by year;
+
+Command 6:
+
+%sql 
+-- #2 
+-- complainant race and gender
+
+
+WITH pairing_allegations AS (
+  SELECT c.race as complainant_race, o.race as officer_race, c.gender as complainant_gender, o.gender as officer_gender, oa.disciplined, 
+  YEAR(a.incident_date) as year
+  FROM data_allegation a, data_officerallegation oa, data_officer o, data_complainant c 
+  WHERE o.id = oa.officer_id AND oa.allegation_id = a.id AND a.id = c.allegation_id
+),
+
+result_set AS (
+  SELECT year, complainant_race, complainant_gender, (100.0*COUNT(CASE WHEN disciplined=true THEN 1 END)/COUNT(*)) as pctgpi, count(*) as total_complaints
+  FROM pairing_allegations
+  WHERE complainant_race != "" AND complainant_gender != ""
+  GROUP BY year, complainant_race, complainant_gender
+  ORDER BY complainant_race, complainant_gender, year
+)
+
+-- **To get all the data:
+-- SELECT * FROM result_set
+-- WHERE year=2017
+-- ORDER BY complainant_race, officer_race, complainant_gender, officer_gender, year;
+
+-- **To see how much data you have, by year:
+-- select year, count(*) from pairing_allegations
+-- group by year
+-- order by year;
+
+-- **To see a specific combination:
+select * from result_set
+where complainant_race = 'Black' and complainant_gender='F'
+order by year;
