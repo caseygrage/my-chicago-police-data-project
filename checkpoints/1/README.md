@@ -1,7 +1,7 @@
 # Checkpoint 1 - Relational Analytics
 
 ### Lessons Learned:
-*Below are some of the main takeaways from our initial database exploration. Full SQL output can be seen in our Checkpoint #1 Report.*
+*Below are some of the main takeaways from our initial database exploration. Full SQL output can be seen in our Checkpoint #1 report.*
 
 **Demographics of complaint reports:**
 * Black individuals filed the most overall complaints against CPDB officers
